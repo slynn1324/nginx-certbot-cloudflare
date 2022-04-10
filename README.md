@@ -15,7 +15,7 @@ I scripted this simple container up to be very minimal, but configurable enough.
 
 ### required enviroment variables:
 
-`DOMAIN` - your domain. Can (should?) be wildcard.  e.g, *.yourdomain.com
+`DOMAIN` - your domain. this should be your base domain, a wildcard certificate will automatically be requested.
 `EMAIL` - your email address.  Used with certbot to obtain the HTTPS certificate.
 
 ### required volume

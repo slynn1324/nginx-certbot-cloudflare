@@ -77,7 +77,7 @@ fi
 # if we don't have a letsencrypt dir, then we need to obtain a cert.  Otherwise we just need to try to renew it (the renewal script will check if it's necessary
 if [ ! -d "/config/letsencrypt" ]; then
     log "/config/letsencrypt does not exist, obtaining initial certificate..."
-    certbot certonly --non-interactive --dns-cloudflare --dns-cloudflare-credentials "/config/cloudflare.ini" --agree-tos --config-dir /config/letsencrypt -d "$DOMAIN" --cert-name https --email "$EMAIL" 2>&1 | while read line; do log_for_task "CERTBOT" "$line"; done
+    certbot certonly --non-interactive --dns-cloudflare --dns-cloudflare-credentials "/config/cloudflare.ini" --agree-tos --config-dir /config/letsencrypt -d "$DOMAIN" -d "*.$DOMAIN" --cert-name https --email "$EMAIL" 2>&1 | while read line; do log_for_task "CERTBOT" "$line"; done
 
     # update /config/nginx/http.d/default with the right domain path for the certificate
 else
