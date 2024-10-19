@@ -1,11 +1,26 @@
 #!/bin/sh
 
+trap "log 'signal received, quitting nginx...'; nginx -s quit" 1 2 3 6 15
+
 log_for_task() {
     echo ["$1"] [$(date -Isecond)] "$2"
 }
 
 log() {
     log_for_task "ENTRYPOINT" "$1"
+}
+
+renew_cert_loop() {
+    log "starting loop to certbot renew every 12h"
+    while true
+    do
+        sleep 43200 #43200s = 12h
+        log "starting certbot renew process"
+        certbot renew --config-dir /config/letsencrypt 2>&1 | while read line; do log_for_task "CERTBOT" "$line"; done
+
+        log "signaling nginx to reload configuration"
+        nginx -s reload 2>&1 | while read line; do log_for_task "NGINX-RELOAD" "$line"; done
+    done
 }
 
 if [ "$DOMAIN" == "" ]; then
@@ -92,19 +107,7 @@ log "starting nginx..."
 nginx -c "/config/nginx/nginx.conf" -g 'daemon off;' 2>&1 | while read line; do log_for_task "NGINX" "$line"; done &
 log "started nginx."
 
-
-
-log "starting loop to certbot renew every 12h"
-
-while true
-do
-    sleep 43200 #43200s = 12h
-    log "starting certbot renew process"
-    certbot renew --config-dir /config/letsencrypt 2>&1 | while read line; do log_for_task "CERTBOT" "$line"; done
-
-    log "signaling nginx to reload configuration"
-    nginx -s reload 2>&1 | while read line; do log_for_task "NGINX-RELOAD" "$line"; done
-done
+renew_cert_loop &
 
 # wait for nginx to exit
 wait -n
