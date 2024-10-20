@@ -23,6 +23,18 @@ renew_cert_loop() {
     done
 }
 
+update_bad_bot_blocker_loop() {
+    log "starting loop to update ngxblocker"
+    sleep 1800 # wait 30 minutes initially to offset from cert loop
+    while true
+    do
+        sleep 43200 #43200s = 12h
+    log "updating ngxblocker"
+        /usr/local/sbin/update-ngxblocker -n | while read line; do log_for_task "UPDATE_NGXBLOCKER" "$line"; done
+        log "ngxblocker updated ok"
+    done
+}
+
 if [ "$DOMAIN" == "" ]; then
     log "DOMAIN environment variable is required."
     exit 1
@@ -104,10 +116,12 @@ fi
 
 log "starting nginx..."
 # run nginx with our config -- daemon off runs in the foreground
-nginx -c "/config/nginx/nginx.conf" -g 'daemon off;' 2>&1 | while read line; do log_for_task "NGINX" "$line"; done &
+nginx -g 'daemon off;' 2>&1 | while read line; do log_for_task "NGINX" "$line"; done &
 log "started nginx."
 
 renew_cert_loop &
+
+update_bad_bot_blocker_loop &
 
 # wait for nginx to exit
 wait -n
